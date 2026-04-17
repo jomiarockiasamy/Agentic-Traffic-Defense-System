@@ -1,0 +1,34 @@
+/Users/shiva/Coding/A10/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+[2026-04-17 10:05:52,708] Shivajis-MacBook-Pro/INFO/locust.main: Starting Locust 2.34.0
+[2026-04-17 10:05:52,708] Shivajis-MacBook-Pro/WARNING/locust.main: Python 3.9 support is deprecated and will be removed soon
+[2026-04-17 10:05:52,710] Shivajis-MacBook-Pro/INFO/locust.main: Run time limit set to 120 seconds
+[2026-04-17 10:05:52,710] Shivajis-MacBook-Pro/INFO/locust.runners: Ramping to 60 users at a rate of 10.00 per second
+[2026-04-17 10:05:57,719] Shivajis-MacBook-Pro/INFO/locust.runners: All users spawned: {"NoisyAuthUser": 30, "WebsiteUser": 30} (60 total users)
+[2026-04-17 10:07:52,519] Shivajis-MacBook-Pro/INFO/locust.main: --run-time limit reached, shutting down
+[2026-04-17 10:07:52,556] Shivajis-MacBook-Pro/INFO/locust.main: Shutting down (exit code 0)
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      GET /                                                                             16     0(0.00%) |      3       2       6      3 |    0.14        0.00
+GET      GET /auth                                                                        130     0(0.00%) |   8577      94    9612   9600 |    1.10        0.00
+GET      GET /concert                                                                      13     0(0.00%) |   9605    9602    9608   9602 |    0.11        0.00
+GET      GET /dashboard                                                                    15     0(0.00%) |   9605    9602    9609   9602 |    0.13        0.00
+POST     POST /buy/<concert>                                                              127     0(0.00%) |  19039   13243   19220  19000 |    1.07        0.00
+POST     POST /login (invalid)                                                            113     0(0.00%) |  18329    1515   19226  19000 |    0.95        0.00
+POST     POST /signup                                                                      30     0(0.00%) |  14638    1088   19530  16000 |    0.25        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       444     0(0.00%) |  14217       2   19530  19000 |    3.75        0.00
+
+Response time percentiles (approximated)
+Type     Name                                                                                  50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+GET      GET /                                                                                   3      3      3      3      5      7      7      7      7      7      7     16
+GET      GET /auth                                                                            9600   9600   9600   9600   9600   9600   9600   9600   9600   9600   9600    130
+GET      GET /concert                                                                         9600   9600   9600   9600   9600   9600   9600   9600   9600   9600   9600     13
+GET      GET /dashboard                                                                       9600   9600   9600   9600   9600   9600   9600   9600   9600   9600   9600     15
+POST     POST /buy/<concert>                                                                 19000  19000  19000  19000  19000  19000  19000  19000  19000  19000  19000    127
+POST     POST /login (invalid)                                                               19000  19000  19000  19000  19000  19000  19000  19000  19000  19000  19000    113
+POST     POST /signup                                                                        18000  19000  20000  20000  20000  20000  20000  20000  20000  20000  20000     30
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+         Aggregated                                                                          19000  19000  19000  19000  19000  19000  20000  20000  20000  20000  20000    444
+

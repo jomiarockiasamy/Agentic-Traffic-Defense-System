@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bot Control</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: linear-gradient(180deg, #f7f9ff, #eef2ff); color: #1f2937; }
+    .bar { position: relative; padding: 12px 16px; background: #0f172a; color: #fff; min-height: 22px; box-shadow: 0 6px 20px rgba(15, 23, 42, .18); }
+    .left { display: flex; gap: 12px; }
+    .bar a { color: #fff; text-decoration: none; }
+    .center { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 700; }
+    .wrap { max-width: 760px; margin: 20px auto; padding: 0 12px; }
+    .card { background: #fff; border: 1px solid #d7ddf2; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .08); }
+    .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    input, button { width: 100%; padding: 9px; margin-top: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid #cbd5e1; }
+    button { border: none; background: #111827; color: #fff; cursor: pointer; }
+    .stop { background: #b91c1c; }
+    pre { white-space: pre-wrap; background: #0b1220; color: #c8d2e8; padding: 12px; border-radius: 8px; max-height: 300px; overflow: auto; }
+    .msg { margin: 8px 0 12px; color: #0a5; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <div class="left"><a href="/dashboard">Dashboard</a><a href="/logout">Logout</a></div>
+    <div class="center">Website</div>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <h2>Bot Control</h2>
+      {% if msg %}<p class="msg">{{ msg }}</p>{% endif %}
+      <p><strong>Status:</strong> {{ status }}</p>
+      <form method="post" action="/bot-control/start">
+        <div class="row">
+          <div><label>Users</label><input name="users" value="60" /></div>
+          <div><label>Spawn/sec</label><input name="spawn" value="10" /></div>
+          <div><label>Duration</label><input name="duration" value="2m" /></div>
+        </div>
+        <button type="submit">Start Bots</button>
+      </form>
+      <form method="post" action="/bot-control/stop">
+        <button type="submit" class="stop">Stop Bots</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Locust Output</h3>
+      <pre>{{ log_tail }}</pre>
+    </div>
+  </div>
+</body>
+</html>
