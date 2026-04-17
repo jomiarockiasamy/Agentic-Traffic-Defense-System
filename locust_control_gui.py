@@ -22,9 +22,11 @@ class LocustControlApp:
 
         self.process = None
         self.log_file = None
-
         self._build_ui()
         self._tick()
+
+
+
 
     def _build_ui(self):
         frm = ttk.Frame(self.root, padding=12)
