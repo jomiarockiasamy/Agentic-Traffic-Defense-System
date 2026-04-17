@@ -1,0 +1,8 @@
+# Groq planner (OpenAI-compatible client) + env loading
+openai>=1.40.0
+python-dotenv>=1.0.0
+# Locust control GUI + load generator + demo stack (single venv for A10)
+PySide6>=6.5.0
+locust>=2.0
+flask>=3.0
+werkzeug>=3.0

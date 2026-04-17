@@ -1,3 +1,4 @@
 flask
 werkzeug
 anthropic>=0.40.0
+pyside6
