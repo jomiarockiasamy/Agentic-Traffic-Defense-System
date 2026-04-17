@@ -1,0 +1,4 @@
+attacker/.env
+.env
+.venv/
+venv/

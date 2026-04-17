@@ -4,7 +4,7 @@ import sqlite3
 import time
 from threading import Lock
 
-from flask import Flask, g, redirect, render_template_string, request, session
+from flask import Flask, g, jsonify, redirect, render_template_string, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
@@ -91,6 +91,13 @@ def ticket_remaining():
         remaining[concert_id] = TICKET_CAP - int(row["sold"])
     conn.close()
     return remaining
+
+
+def get_concert_ids():
+    conn = db_conn()
+    rows = conn.execute("SELECT concert_id FROM concerts ORDER BY concert_id").fetchall()
+    conn.close()
+    return [r["concert_id"] for r in rows]
 
 
 def db_conn():
@@ -228,6 +235,38 @@ def dashboard():
     if not session.get("user"):
         return redirect("/?msg=Please+log+in")
     return page("dashboard.html", user=session.get("user"), remaining=ticket_remaining())
+
+
+@app.get("/api/attack-surface")
+def attack_surface():
+    concert_ids = get_concert_ids()
+    return jsonify(
+        {
+            "actions_allowlist": [
+                "browse_home",
+                "view_dashboard",
+                "view_concert",
+                "buy_ticket",
+                "signup_only",
+                "invalid_login",
+            ],
+            "endpoints": {
+                "home": "/",
+                "dashboard": "/dashboard",
+                "signup": "/signup",
+                "login": "/login",
+                "buy_template": "/buy/{concert_id}",
+                "concert_template": "/{concert_id}",
+            },
+            "entity_ids": {
+                "concert_ids": concert_ids,
+            },
+            "constraints": {
+                "ticket_cap_per_concert": TICKET_CAP,
+                "allowed_buy_quantities": [1, 2, 3],
+            },
+        }
+    )
 
 @app.get("/concert1")
 def concert1():

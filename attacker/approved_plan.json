@@ -1,0 +1,35 @@
+{
+  "persona": "bulk buyer",
+  "provider": "mock",
+  "model": "demo-planner-v1",
+  "spawn_rate": 12,
+  "duration": "2m",
+  "think_time_min": 0.03,
+  "think_time_max": 0.2,
+  "actions": [
+    {
+      "name": "browse_home",
+      "weight": 1
+    },
+    {
+      "name": "view_concert",
+      "weight": 2
+    },
+    {
+      "name": "buy_ticket",
+      "weight": 8,
+      "params": {
+        "weights": [
+          0.7,
+          0.2,
+          0.1
+        ],
+        "qty_weights": [
+          0.3,
+          0.4,
+          0.3
+        ]
+      }
+    }
+  ]
+}

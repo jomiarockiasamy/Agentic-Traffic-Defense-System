@@ -1,0 +1,33 @@
+{
+  "actions_allowlist": [
+    "browse_home",
+    "view_dashboard",
+    "view_concert",
+    "buy_ticket",
+    "signup_only",
+    "invalid_login"
+  ],
+  "constraints": {
+    "allowed_buy_quantities": [
+      1,
+      2,
+      3
+    ],
+    "ticket_cap_per_concert": 100
+  },
+  "endpoints": {
+    "buy_template": "/buy/{concert_id}",
+    "concert_template": "/{concert_id}",
+    "dashboard": "/dashboard",
+    "home": "/",
+    "login": "/login",
+    "signup": "/signup"
+  },
+  "entity_ids": {
+    "concert_ids": [
+      "concert1",
+      "concert2",
+      "concert3"
+    ]
+  }
+}
