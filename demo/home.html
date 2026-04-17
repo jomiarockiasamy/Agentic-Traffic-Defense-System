@@ -3,63 +3,162 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Website</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: linear-gradient(180deg, #f7f9ff, #eef2ff); color: #1f2937; }
-    .bar { position: relative; padding: 12px 16px; background: #0f172a; color: #fff; min-height: 22px; box-shadow: 0 6px 20px rgba(15, 23, 42, .18); }
-    .left { display: flex; gap: 12px; }
-    .bar a { color: #fff; text-decoration: none; }
-    .center { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 700; }
-    .wrap { max-width: 760px; margin: 20px auto; padding: 0 12px; }
-    .card { background: #fff; border: 1px solid #d7ddf2; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .08); }
-    .concert { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 12px 0; padding: 12px; border: 1px solid #e6ebff; border-radius: 10px; background: #f8faff; }
-    .leftinfo p { margin: 0; }
-    .rightinfo { text-align: right; min-width: 130px; }
-    .badge { display: inline-block; background: #e0e7ff; color: #3730a3; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
-    .btn { background: #111827; color: #fff; border: none; border-radius: 8px; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; padding: 9px 12px; }
-    .msg { margin: 8px 0 12px; color: #0a5; font-size: 14px; }
-    .loading { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; z-index: 9999; }
-    .loading-box { background: #fff; padding: 14px; border-radius: 8px; width: 280px; text-align: center; }
-    .barline { height: 8px; background: #eee; border-radius: 99px; overflow: hidden; margin-top: 8px; }
-    .barline span { display: block; height: 100%; width: 45%; background: #111; animation: slide 1s infinite; }
-    @keyframes slide { 0% { transform: translateX(-100%);} 100% { transform: translateX(300%);} }
-  </style>
+  <title>Tickets.Now — Hot shows</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='tickets.css') }}" />
 </head>
 <body>
-  <div id="loading" class="loading"><div class="loading-box">Loading...<div class="barline"><span></span></div></div></div>
-  <div class="bar">
-    <div class="left">
+  <div id="loading" class="loading"><div class="loading-box">Loading…<div class="barline"><span></span></div></div></div>
+
+  <header class="site-nav">
+    <a class="site-nav__brand" href="/">
+      <span class="site-nav__logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v1H2V9z"/><path d="M2 11h20v2a3 3 0 0 1-3 3v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4a3 3 0 0 1-3-3v-2z"/><path d="M7 15h.01"/><path d="M17 15h.01"/></svg>
+      </span>
+      Tickets.Now
+    </a>
+    <nav class="site-nav__links">
+      <a href="/">Home</a>
       {% if user %}
-      <a href="/dashboard">Dashboard</a><a href="/logout">Logout</a>
+      <a href="/dashboard">My Tickets</a>
+      <a href="/logout">Logout</a>
+      <span class="site-nav__avatar" title="{{ user }}">{{ user[0]|upper }}</span>
       {% else %}
       <a href="/auth">Login</a>
       {% endif %}
+    </nav>
+  </header>
+
+  <div class="page-wrap">
+    {% if msg %}<div class="msg-banner">{{ msg }}</div>{% endif %}
+    <div class="page-hero">
+      <h1>Hot Shows This Season</h1>
+      <p>Don't miss out on these incredible live performances</p>
     </div>
-    <div class="center">Website</div>
+
+    <div class="event-list">
+      <article class="event-card">
+        <div class="event-card__image-wrap">
+          <span class="genre-tag">Pop</span>
+          <img src="https://picsum.photos/seed/ticketsnow1/400/520" width="400" height="520" alt="Taylor Swift" />
+        </div>
+        <div class="event-card__body">
+          <div class="event-card__top">
+            <div>
+              <h2 class="event-card__artist">Taylor Swift</h2>
+              <p class="event-card__tour">The Eras Tour</p>
+            </div>
+            <div class="event-card__price">
+              <span class="price">$50</span>
+              <span class="per">per ticket</span>
+            </div>
+          </div>
+          <div class="event-card__meta">
+            <span class="meta-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              MetLife Stadium, East Rutherford, NJ
+            </span>
+            <span class="meta-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Saturday, May 24, 2026 · 7:30 PM
+            </span>
+          </div>
+          {% if remaining["concert1"] > 0 %}
+          <span class="scarcity">Only {{ remaining["concert1"] }} tickets left!</span>
+          {% else %}
+          <span class="scarcity" style="background:#fee2e2;color:#991b1b;">Sold out</span>
+          {% endif %}
+          <a class="btn-primary" href="/concert1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M2 9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v1H2V9z"/><path d="M2 11h20v2a3 3 0 0 1-3 3v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4a3 3 0 0 1-3-3v-2z"/></svg>
+            Get Tickets
+          </a>
+        </div>
+      </article>
+
+      <article class="event-card">
+        <div class="event-card__image-wrap">
+          <span class="genre-tag">R&amp;B</span>
+          <img src="https://picsum.photos/seed/ticketsnow2/400/520" width="400" height="520" alt="The Weeknd" />
+        </div>
+        <div class="event-card__body">
+          <div class="event-card__top">
+            <div>
+              <h2 class="event-card__artist">The Weeknd</h2>
+              <p class="event-card__tour">After Hours Tour</p>
+            </div>
+            <div class="event-card__price">
+              <span class="price">$60</span>
+              <span class="per">per ticket</span>
+            </div>
+          </div>
+          <div class="event-card__meta">
+            <span class="meta-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Barclays Center, Brooklyn, NY
+            </span>
+            <span class="meta-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Friday, June 13, 2026 · 8:00 PM
+            </span>
+          </div>
+          {% if remaining["concert2"] > 0 %}
+          <span class="scarcity">Only {{ remaining["concert2"] }} tickets left!</span>
+          {% else %}
+          <span class="scarcity" style="background:#fee2e2;color:#991b1b;">Sold out</span>
+          {% endif %}
+          <a class="btn-primary" href="/concert2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M2 9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v1H2V9z"/><path d="M2 11h20v2a3 3 0 0 1-3 3v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4a3 3 0 0 1-3-3v-2z"/></svg>
+            Get Tickets
+          </a>
+        </div>
+      </article>
+
+      <article class="event-card">
+        <div class="event-card__image-wrap">
+          <span class="genre-tag">Rock</span>
+          <img src="https://picsum.photos/seed/ticketsnow3/400/520" width="400" height="520" alt="Coldplay" />
+        </div>
+        <div class="event-card__body">
+          <div class="event-card__top">
+            <div>
+              <h2 class="event-card__artist">Coldplay</h2>
+              <p class="event-card__tour">Music of the Spheres</p>
+            </div>
+            <div class="event-card__price">
+              <span class="price">$70</span>
+              <span class="per">per ticket</span>
+            </div>
+          </div>
+          <div class="event-card__meta">
+            <span class="meta-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Madison Square Garden, New York, NY
+            </span>
+            <span class="meta-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Thursday, July 2, 2026 · 7:00 PM
+            </span>
+          </div>
+          {% if remaining["concert3"] > 0 %}
+          <span class="scarcity">Only {{ remaining["concert3"] }} tickets left!</span>
+          {% else %}
+          <span class="scarcity" style="background:#fee2e2;color:#991b1b;">Sold out</span>
+          {% endif %}
+          <a class="btn-primary" href="/concert3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M2 9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v1H2V9z"/><path d="M2 11h20v2a3 3 0 0 1-3 3v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4a3 3 0 0 1-3-3v-2z"/></svg>
+            Get Tickets
+          </a>
+        </div>
+      </article>
+    </div>
   </div>
 
-  <div class="wrap">
-    {% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
-    <div class="card">
-      <h2>Upcoming Concerts</h2>
-      <div class="concert">
-        <div class="leftinfo"><p><strong>Concert 1</strong> at <strong>Big Arena</strong></p></div>
-        <div class="rightinfo"><div class="badge">{{ remaining["concert1"] }} Left</div><a class="btn" href="/concert1">Buy Tickets</a></div>
-      </div>
-      <div class="concert">
-        <div class="leftinfo"><p><strong>Concert 2</strong> at <strong>Big Arena</strong></p></div>
-        <div class="rightinfo"><div class="badge">{{ remaining["concert2"] }} Left</div><a class="btn" href="/concert2">Buy Tickets</a></div>
-      </div>
-      <div class="concert">
-        <div class="leftinfo"><p><strong>Concert 3</strong> at <strong>Big Arena</strong></p></div>
-        <div class="rightinfo"><div class="badge">{{ remaining["concert3"] }} Left</div><a class="btn" href="/concert3">Buy Tickets</a></div>
-      </div>
-    </div>
-  </div>
   <script>
     const loader = document.getElementById("loading");
-    const show = () => loader.style.display = "flex";
-    document.querySelectorAll("a").forEach(a => a.addEventListener("click", show));
+    const show = () => { loader.style.display = "flex"; };
+    document.querySelectorAll("a[href]").forEach(a => a.addEventListener("click", show));
     document.querySelectorAll("form").forEach(f => f.addEventListener("submit", show));
   </script>
 </body>

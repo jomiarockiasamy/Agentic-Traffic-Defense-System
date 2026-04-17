@@ -3,46 +3,91 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Concert 3</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f5f7fb; color: #222; }
-    .bar { position: relative; padding: 12px 16px; background: #111; color: #fff; min-height: 22px; }
-    .left { display: flex; gap: 12px; }
-    .bar a { color: #fff; text-decoration: none; }
-    .center { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 700; }
-    .wrap { max-width: 640px; margin: 20px auto; padding: 0 12px; }
-    .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 14px; }
-    input, button { width: 100%; padding: 9px; margin-top: 8px; box-sizing: border-box; }
-    button { background: #111; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-    .loading { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; z-index: 9999; }
-    .loading-box { background: #fff; padding: 14px; border-radius: 8px; width: 280px; text-align: center; }
-    .barline { height: 8px; background: #eee; border-radius: 99px; overflow: hidden; margin-top: 8px; }
-    .barline span { display: block; height: 100%; width: 45%; background: #111; animation: slide 1s infinite; }
-    @keyframes slide { 0% { transform: translateX(-100%);} 100% { transform: translateX(300%);} }
-  </style>
+  <title>Purchase — Coldplay · Tickets.Now</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='tickets.css') }}" />
 </head>
 <body>
-  <div id="loading" class="loading"><div class="loading-box">Loading...<div class="barline"><span></span></div></div></div>
-  <div class="bar">
-    <div class="left"><a href="/dashboard">Dashboard</a></div>
-    <div class="center">Website</div>
-  </div>
-  <div class="wrap">
-    <div class="card">
-      <h2>Concert 3</h2>
-      <p>Venue: Big Arena</p>
-      <p>Price: $70</p>
-      {% if msg %}<p>{{ msg }}</p>{% endif %}
-      <form method="post" action="/buy/concert3">
-        <input name="quantity" type="number" min="1" value="1" required />
-        <button type="submit">Buy Ticket</button>
-      </form>
+  <div id="loading" class="loading"><div class="loading-box">Loading…<div class="barline"><span></span></div></div></div>
+
+  <header class="site-nav">
+    <a class="site-nav__brand" href="/dashboard">
+      <span class="site-nav__logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v1H2V9z"/><path d="M2 11h20v2a3 3 0 0 1-3 3v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4a3 3 0 0 1-3-3v-2z"/></svg>
+      </span>
+      Tickets.Now
+    </a>
+    <nav class="site-nav__links">
+      <a href="/">Home</a>
+      <a href="/dashboard">My Tickets</a>
+      <a href="/logout">Logout</a>
+    </nav>
+  </header>
+
+  <div class="purchase-backdrop" role="presentation">
+    <div class="purchase-modal" role="dialog" aria-labelledby="purchase-title">
+      <div class="purchase-modal__head">
+        <h1 class="purchase-modal__title" id="purchase-title"><span class="icon-ticket" aria-hidden="true">🎫</span> Purchase Tickets</h1>
+        <a href="/dashboard" class="purchase-modal__close" aria-label="Close" style="display:grid;place-items:center;text-decoration:none;">&times;</a>
+      </div>
+      <div class="purchase-modal__body">
+        <div class="purchase-summary">
+          <p class="purchase-summary__line">Coldplay — Music of the Spheres</p>
+          <p class="purchase-summary__price">$70 per ticket</p>
+        </div>
+        {% if msg %}<div class="purchase-msg">{{ msg }}</div>{% endif %}
+        {% if remaining["concert3"] < 1 %}
+        <p style="text-align:center;color:var(--text-muted);">This show is sold out.</p>
+        <div class="modal-actions" style="margin-top:12px;">
+          <a class="btn-secondary" href="/dashboard" style="flex:1;text-align:center;padding:12px;border-radius:12px;background:#f3f4f6;color:var(--text);font-weight:600;text-decoration:none;">Back</a>
+        </div>
+        {% else %}
+        <form method="post" action="/buy/concert3" id="buy-form">
+          <label class="qty-label" for="qty">Number of tickets</label>
+          <div class="qty-row">
+            <button type="button" class="qty-btn" id="qty-minus" aria-label="Decrease">−</button>
+            <input name="quantity" id="qty" type="number" min="1" max="{{ remaining['concert3'] }}" value="1" required />
+            <button type="button" class="qty-btn" id="qty-plus" aria-label="Increase">+</button>
+          </div>
+          <p class="qty-hint">Maximum {{ remaining["concert3"] }} tickets available</p>
+          <div class="total-row">
+            <span>Total amount</span>
+            <span class="total-amt" id="total">$70</span>
+          </div>
+          <div class="modal-actions">
+            <a class="btn-secondary" href="/dashboard">Cancel</a>
+            <button type="submit" class="btn-confirm">Confirm purchase</button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
     </div>
   </div>
+
   <script>
+    const PRICE = 70;
+    const max = {{ remaining["concert3"]|int }};
+    const qty = document.getElementById("qty");
+    const totalEl = document.getElementById("total");
+    function sync() {
+      if (!qty || !totalEl) return;
+      let n = parseInt(qty.value, 10) || 1;
+      if (n < 1) n = 1;
+      if (n > max) n = max;
+      qty.value = n;
+      totalEl.textContent = "$" + (n * PRICE);
+    }
+    if (qty) {
+      document.getElementById("qty-minus")?.addEventListener("click", () => { qty.stepDown(); sync(); });
+      document.getElementById("qty-plus")?.addEventListener("click", () => { qty.stepUp(); sync(); });
+      qty.addEventListener("input", sync);
+      sync();
+    }
     const loader = document.getElementById("loading");
-    const show = () => loader.style.display = "flex";
-    document.querySelectorAll("a").forEach(a => a.addEventListener("click", show));
+    const show = () => { loader.style.display = "flex"; };
+    document.querySelectorAll("a[href]").forEach(a => a.addEventListener("click", show));
     document.querySelectorAll("form").forEach(f => f.addEventListener("submit", show));
   </script>
 </body>
