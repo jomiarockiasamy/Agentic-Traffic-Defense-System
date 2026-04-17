@@ -2,12 +2,17 @@
 import os
 import random
 import sqlite3
+import sys
 import time
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
 
 from flask import Flask, Response, jsonify, redirect, render_template_string, request, session, g
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from defender.runtime import client_ip_for_defense, defender
+from defenders import PACKAGE_DIR, client_ip_for_defense, defender
 
 app = Flask(__name__)
 app.secret_key = "demo-secret-key"
@@ -381,7 +386,7 @@ def debug_client_ip():
 
 @app.get("/monitor")
 def monitor_page():
-    with open(os.path.join(BASE_DIR, "monitor.html"), encoding="utf-8") as f:
+    with open(os.path.join(PACKAGE_DIR, "monitor.html"), encoding="utf-8") as f:
         return Response(f.read(), mimetype="text/html")
 
 
