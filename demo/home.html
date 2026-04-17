@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
+  <title>Website</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: linear-gradient(180deg, #f7f9ff, #eef2ff); color: #1f2937; }
     .bar { position: relative; padding: 12px 16px; background: #0f172a; color: #fff; min-height: 22px; box-shadow: 0 6px 20px rgba(15, 23, 42, .18); }
@@ -11,11 +11,13 @@
     .bar a { color: #fff; text-decoration: none; }
     .center { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 700; }
     .wrap { max-width: 760px; margin: 20px auto; padding: 0 12px; }
-    .hero { text-align: center; }
-    .card { background: #fff; border: 1px solid #d7ddf2; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .08); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .card { background: #fff; border: 1px solid #d7ddf2; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .08); }
+    .concert { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 12px 0; padding: 12px; border: 1px solid #e6ebff; border-radius: 10px; background: #f8faff; }
+    .leftinfo p { margin: 0; }
     .rightinfo { text-align: right; min-width: 130px; }
     .badge { display: inline-block; background: #e0e7ff; color: #3730a3; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
-    .btn { background: #111827; color: #fff; border-radius: 8px; text-decoration: none; padding: 9px 12px; display: inline-block; }
+    .btn { background: #111827; color: #fff; border: none; border-radius: 8px; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; padding: 9px 12px; }
+    .msg { margin: 8px 0 12px; color: #0a5; font-size: 14px; }
     .loading { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; z-index: 9999; }
     .loading-box { background: #fff; padding: 14px; border-radius: 8px; width: 280px; text-align: center; }
     .barline { height: 8px; background: #eee; border-radius: 99px; overflow: hidden; margin-top: 8px; }
@@ -26,25 +28,32 @@
 <body>
   <div id="loading" class="loading"><div class="loading-box">Loading...<div class="barline"><span></span></div></div></div>
   <div class="bar">
-    <div class="left"><a href="/">Home</a><a href="/bot-control">Bot Control</a><a href="/logout">Logout</a></div>
+    <div class="left">
+      {% if user %}
+      <a href="/dashboard">Dashboard</a><a href="/logout">Logout</a>
+      {% else %}
+      <a href="/auth">Login</a>
+      {% endif %}
+    </div>
     <div class="center">Website</div>
   </div>
+
   <div class="wrap">
-    <div class="hero">
-      <h2>Home Screen</h2>
-      <p>Welcome, {{ user }}</p>
-    </div>
+    {% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
     <div class="card">
-      <p><strong>Concert 1</strong> at <strong>Big Arena</strong></p>
-      <div class="rightinfo"><div class="badge">{{ remaining["concert1"] }} Left</div><a class="btn" href="/concert1">Buy Tickets</a></div>
-    </div>
-    <div class="card">
-      <p><strong>Concert 2</strong> at <strong>Big Arena</strong></p>
-      <div class="rightinfo"><div class="badge">{{ remaining["concert2"] }} Left</div><a class="btn" href="/concert2">Buy Tickets</a></div>
-    </div>
-    <div class="card">
-      <p><strong>Concert 3</strong> at <strong>Big Arena</strong></p>
-      <div class="rightinfo"><div class="badge">{{ remaining["concert3"] }} Left</div><a class="btn" href="/concert3">Buy Tickets</a></div>
+      <h2>Upcoming Concerts</h2>
+      <div class="concert">
+        <div class="leftinfo"><p><strong>Concert 1</strong> at <strong>Big Arena</strong></p></div>
+        <div class="rightinfo"><div class="badge">{{ remaining["concert1"] }} Left</div><a class="btn" href="/concert1">Buy Tickets</a></div>
+      </div>
+      <div class="concert">
+        <div class="leftinfo"><p><strong>Concert 2</strong> at <strong>Big Arena</strong></p></div>
+        <div class="rightinfo"><div class="badge">{{ remaining["concert2"] }} Left</div><a class="btn" href="/concert2">Buy Tickets</a></div>
+      </div>
+      <div class="concert">
+        <div class="leftinfo"><p><strong>Concert 3</strong> at <strong>Big Arena</strong></p></div>
+        <div class="rightinfo"><div class="badge">{{ remaining["concert3"] }} Left</div><a class="btn" href="/concert3">Buy Tickets</a></div>
+      </div>
     </div>
   </div>
   <script>

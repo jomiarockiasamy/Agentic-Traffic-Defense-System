@@ -1,7 +1,6 @@
 import os
 import random
 import sqlite3
-import subprocess
 import time
 from threading import Lock
 
@@ -34,9 +33,6 @@ DEMO_DELAY_PATHS = {
 }
 active_requests = 0
 active_requests_lock = Lock()
-locust_process = None
-locust_lock = Lock()
-LOCUST_LOG_PATH = os.path.join(BASE_DIR, "locust-run.log")
 
 
 def current_dynamic_delay(active_count: int) -> float:
@@ -177,27 +173,6 @@ def init_db():
     conn.close()
 
 
-def locust_is_running():
-    with locust_lock:
-        return locust_process is not None and locust_process.poll() is None
-
-
-def locust_status():
-    with locust_lock:
-        if locust_process is None:
-            return "stopped"
-        if locust_process.poll() is None:
-            return f"running (pid {locust_process.pid})"
-        return f"stopped (exit {locust_process.returncode})"
-
-
-def read_locust_tail(limit=40):
-    if not os.path.exists(LOCUST_LOG_PATH):
-        return "No run log yet."
-    with open(LOCUST_LOG_PATH, "r", encoding="utf-8", errors="ignore") as f:
-        lines = f.readlines()
-    return "".join(lines[-limit:]).strip() or "No output yet."
-
 @app.get("/")
 def home():
     return page(
@@ -253,66 +228,6 @@ def dashboard():
     if not session.get("user"):
         return redirect("/?msg=Please+log+in")
     return page("dashboard.html", user=session.get("user"), remaining=ticket_remaining())
-
-
-@app.get("/bot-control")
-def bot_control():
-    if not session.get("user"):
-        return redirect("/?msg=Please+log+in")
-    return page(
-        "bot_control.html",
-        msg=request.args.get("msg", ""),
-        status=locust_status(),
-        running=locust_is_running(),
-        log_tail=read_locust_tail(),
-    )
-
-
-@app.post("/bot-control/start")
-def bot_control_start():
-    global locust_process
-    if not session.get("user"):
-        return redirect("/?msg=Please+log+in")
-    users = request.form.get("users", "60")
-    spawn = request.form.get("spawn", "10")
-    duration = request.form.get("duration", "2m")
-    if locust_is_running():
-        return redirect("/bot-control?msg=Locust+already+running")
-    locust_bin = os.path.join(BASE_DIR, ".venv", "bin", "locust")
-    if not os.path.exists(locust_bin):
-        return redirect("/bot-control?msg=Locust+not+installed+in+.venv")
-    cmd = [
-        locust_bin,
-        "-f",
-        os.path.join(BASE_DIR, "locustfile.py"),
-        "--host",
-        "http://127.0.0.1:5000",
-        "--headless",
-        "-u",
-        str(users),
-        "-r",
-        str(spawn),
-        "-t",
-        str(duration),
-        "--only-summary",
-    ]
-    with locust_lock:
-        log_file = open(LOCUST_LOG_PATH, "w", encoding="utf-8")
-        locust_process = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT, cwd=BASE_DIR)
-    return redirect("/bot-control?msg=Locust+started")
-
-
-@app.post("/bot-control/stop")
-def bot_control_stop():
-    global locust_process
-    if not session.get("user"):
-        return redirect("/?msg=Please+log+in")
-    with locust_lock:
-        if locust_process is not None and locust_process.poll() is None:
-            locust_process.terminate()
-            locust_process = None
-            return redirect("/bot-control?msg=Locust+stopped")
-    return redirect("/bot-control?msg=No+running+Locust+process")
 
 @app.get("/concert1")
 def concert1():

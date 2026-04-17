@@ -9,8 +9,9 @@ from tkinter import messagebox, ttk
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(BASE_DIR)
 LOCUSTFILE = os.path.join(BASE_DIR, "locustfile.py")
-LOCUST_BIN = os.path.join(BASE_DIR, ".venv", "bin", "locust")
+LOCUST_BIN = os.path.join(ROOT_DIR, ".venv", "bin", "locust")
 LOG_PATH = os.path.join(BASE_DIR, "locust-gui.log")
 
 
