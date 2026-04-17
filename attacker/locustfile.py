@@ -1,7 +1,28 @@
+"""
+Load test for the demo Flask app.
+
+Each virtual user sends a random X-Forwarded-For so the defender sees many
+simulated client IPs (Locust itself still runs from one machine).
+
+Attack preset (judges / spike demo):
+  locust -f locustfile.py --host=http://127.0.0.1:5001 \\
+    --users 200 --spawn-rate 15 --run-time 120s --headless
+
+See ATTACK.md in this folder.
+"""
 import random
 import uuid
 
 from locust import HttpUser, between, task
+
+
+def _random_public_ipv4() -> str:
+    """Fake client IP for X-Forwarded-For (demo only; not routable realism)."""
+    return ".".join(str(random.randint(1, 223)) for _ in range(4))
+
+
+def _xff_headers() -> dict[str, str]:
+    return {"X-Forwarded-For": _random_public_ipv4()}
 
 
 class WebsiteUser(HttpUser):
@@ -14,19 +35,20 @@ class WebsiteUser(HttpUser):
         self.client.post(
             "/signup",
             data={"name": "Demo User", "email": self.email, "password": self.password},
+            headers=_xff_headers(),
             allow_redirects=True,
             name="POST /signup",
         )
 
     @task(1)
     def browse(self):
-        self.client.get("/", name="GET /")
-        self.client.get("/dashboard", name="GET /dashboard")
+        self.client.get("/", headers=_xff_headers(), name="GET /")
+        self.client.get("/dashboard", headers=_xff_headers(), name="GET /dashboard")
 
     @task(1)
     def view_concert(self):
         cid = random.choice(["concert1", "concert2", "concert3"])
-        self.client.get(f"/{cid}", name="GET /concert")
+        self.client.get(f"/{cid}", headers=_xff_headers(), name="GET /concert")
 
     @task(8)
     def buy_ticket(self):
@@ -40,6 +62,7 @@ class WebsiteUser(HttpUser):
         self.client.post(
             f"/buy/{cid}",
             data={"quantity": str(qty)},
+            headers=_xff_headers(),
             allow_redirects=True,
             name="POST /buy/<concert>",
         )
@@ -51,10 +74,11 @@ class NoisyAuthUser(HttpUser):
 
     @task
     def auth_spam_pattern(self):
-        self.client.get("/auth", name="GET /auth")
+        self.client.get("/auth", headers=_xff_headers(), name="GET /auth")
         self.client.post(
             "/login",
             data={"email": "fake@demo.test", "password": "badpass"},
+            headers=_xff_headers(),
             allow_redirects=True,
             name="POST /login (invalid)",
         )

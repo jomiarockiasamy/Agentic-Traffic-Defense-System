@@ -1,17 +1,22 @@
+"""Flask app: ticketing site + defense APIs. Run: python3 app.py (or: PORT=5001 python3 app.py)"""
 import os
 import random
 import sqlite3
 import time
-from threading import Lock
 
-from flask import Flask, g, redirect, render_template_string, request, session
+from flask import Flask, Response, jsonify, redirect, render_template_string, request, session, g
 from werkzeug.security import check_password_hash, generate_password_hash
+
+from defender.runtime import client_ip_for_defense, defender
 
 app = Flask(__name__)
 app.secret_key = "demo-secret-key"
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "app.db")
 TICKET_CAP = 100
+
+# Demo degradation mode (simulated latency)
 DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 DEMO_DELAY_MIN = float(os.getenv("DEMO_DELAY_MIN", "0.08"))
 DEMO_DELAY_MAX = float(os.getenv("DEMO_DELAY_MAX", "8"))
@@ -19,6 +24,7 @@ DEMO_BASE_DELAY = float(os.getenv("DEMO_BASE_DELAY", "0.1"))
 DEMO_CAPACITY = int(os.getenv("DEMO_CAPACITY", "8"))
 DEMO_DELAY_PER_USER = float(os.getenv("DEMO_DELAY_PER_USER", "0.35"))
 DEMO_MAX_DYNAMIC_DELAY = float(os.getenv("DEMO_MAX_DYNAMIC_DELAY", "12"))
+
 DEMO_DELAY_PATHS = {
     "/auth",
     "/signup",
@@ -31,8 +37,6 @@ DEMO_DELAY_PATHS = {
     "/buy/concert2",
     "/buy/concert3",
 }
-active_requests = 0
-active_requests_lock = Lock()
 
 
 def current_dynamic_delay(active_count: int) -> float:
@@ -44,19 +48,23 @@ def current_dynamic_delay(active_count: int) -> float:
 
 
 @app.before_request
-def demo_degrade_mode():
-    global active_requests
-    with active_requests_lock:
-        active_requests += 1
-        g.active_requests_snapshot = active_requests
+def traffic_and_defense_layer():
+    blocked = defender.before_request(
+        client_ip=client_ip_for_defense(request.headers, request.remote_addr),
+    )
+    if blocked is not None:
+        return blocked
+
+    # Keep degrade-mode snapshot for the latency simulator.
+    g.active_requests_snapshot = defender.active_requests
+
     if not DEMO_MODE:
         return None
     if request.path not in DEMO_DELAY_PATHS:
         return None
     dynamic_delay = current_dynamic_delay(g.active_requests_snapshot)
-    jitter_min = dynamic_delay * 0.8
+    jitter_min = max(0.0, dynamic_delay * 0.8)
     jitter_max = dynamic_delay * 1.2
-    jitter_min = max(0.0, jitter_min)
     if DEMO_DELAY_MIN > 0:
         jitter_min = max(jitter_min, DEMO_DELAY_MIN)
     if DEMO_DELAY_MAX > 0:
@@ -69,28 +77,15 @@ def demo_degrade_mode():
 
 @app.after_request
 def release_active_request(response):
-    global active_requests
-    with active_requests_lock:
-        active_requests = max(0, active_requests - 1)
+    defender.after_request()
     return response
 
 
 def page(name: str, **ctx):
     with open(os.path.join(BASE_DIR, name), "r", encoding="utf-8") as f:
-        return render_template_string(f.read(), **ctx)
-
-
-def ticket_remaining():
-    conn = db_conn()
-    remaining = {}
-    for concert_id in ("concert1", "concert2", "concert3"):
-        row = conn.execute(
-            "SELECT COALESCE(SUM(quantity), 0) AS sold FROM user_tickets WHERE concert_id = ?",
-            (concert_id,),
-        ).fetchone()
-        remaining[concert_id] = TICKET_CAP - int(row["sold"])
-    conn.close()
-    return remaining
+        defaults = defender.template_context()
+        defaults.update(ctx)
+        return render_template_string(f.read(), **defaults)
 
 
 def db_conn():
@@ -173,6 +168,19 @@ def init_db():
     conn.close()
 
 
+def ticket_remaining():
+    conn = db_conn()
+    remaining = {}
+    for concert_id in ("concert1", "concert2", "concert3"):
+        row = conn.execute(
+            "SELECT COALESCE(SUM(quantity), 0) AS sold FROM user_tickets WHERE concert_id = ?",
+            (concert_id,),
+        ).fetchone()
+        remaining[concert_id] = TICKET_CAP - int(row["sold"])
+    conn.close()
+    return remaining
+
+
 @app.get("/")
 def home():
     return page(
@@ -182,11 +190,13 @@ def home():
         remaining=ticket_remaining(),
     )
 
+
 @app.get("/auth")
 def auth_page():
     if session.get("user"):
         return redirect("/dashboard")
     return page("auth.html", msg=request.args.get("msg", ""))
+
 
 @app.post("/signup")
 def signup():
@@ -210,6 +220,7 @@ def signup():
     session["user_email"] = email
     return redirect("/dashboard")
 
+
 @app.post("/login")
 def login():
     email = request.form.get("email", "").strip().lower()
@@ -223,11 +234,13 @@ def login():
     session["user_email"] = email
     return redirect("/dashboard")
 
+
 @app.get("/dashboard")
 def dashboard():
     if not session.get("user"):
         return redirect("/?msg=Please+log+in")
     return page("dashboard.html", user=session.get("user"), remaining=ticket_remaining())
+
 
 @app.get("/concert1")
 def concert1():
@@ -235,17 +248,20 @@ def concert1():
         return redirect("/?msg=Please+log+in")
     return page("concert1.html", msg=request.args.get("msg", ""))
 
+
 @app.get("/concert2")
 def concert2():
     if not session.get("user"):
         return redirect("/?msg=Please+log+in")
     return page("concert2.html", msg=request.args.get("msg", ""))
 
+
 @app.get("/concert3")
 def concert3():
     if not session.get("user"):
         return redirect("/?msg=Please+log+in")
     return page("concert3.html", msg=request.args.get("msg", ""))
+
 
 @app.post("/buy/<concert_id>")
 def buy(concert_id):
@@ -299,11 +315,77 @@ def buy(concert_id):
         return redirect(f"/{concert_id}?msg=Order+placed.+Sold+out+now")
     return redirect(f"/{concert_id}?msg=Order+placed+for+{qty}+ticket(s).+{left_after_buy}+left")
 
+
 @app.get("/logout")
 def logout():
     session.clear()
     return redirect("/?msg=Logged+out")
 
+
+@app.get("/state")
+def state():
+    return jsonify(defender.build_state())
+
+
+@app.get("/debug/client-ip")
+def debug_client_ip():
+    """Verify X-Forwarded-For vs TCP remote_addr (Locust sends one TCP IP; XFF is the simulated client)."""
+    return jsonify(
+        {
+            "effective_client_ip": client_ip_for_defense(request.headers, request.remote_addr),
+            "x_forwarded_for": request.headers.get("X-Forwarded-For"),
+            "remote_addr": request.remote_addr,
+            "trust_x_forwarded_for": os.getenv("TRUST_X_FORWARDED_FOR", "1") == "1",
+        }
+    )
+
+
+@app.get("/monitor")
+def monitor_page():
+    with open(os.path.join(BASE_DIR, "monitor.html"), encoding="utf-8") as f:
+        return Response(f.read(), mimetype="text/html")
+
+
+@app.get("/traffic")
+def traffic():
+    # Back-compat endpoint (most dashboards should use /state).
+    s = defender.build_state()
+    allowed = s["traffic"]["allowed_rps_series"]
+    blocked = s["traffic"]["blocked_rps_series"]
+    now = int(time.time())
+    start = now - (defender.METRICS_WINDOW_SECONDS - 1)
+    per_second = [
+        {"ts": start + i, "rps": allowed[i] + blocked[i], "allowed": allowed[i], "blocked": blocked[i]}
+        for i in range(defender.METRICS_WINDOW_SECONDS)
+    ]
+    return jsonify(
+        {
+            "request_count": defender.request_count,
+            "allowed_count": defender.allowed_count,
+            "blocked_count": defender.blocked_count,
+            "active_requests": defender.active_requests,
+            "window_seconds": defender.METRICS_WINDOW_SECONDS,
+            "defense": {"max_rps": defender.max_rps},
+            "per_second": per_second,
+        }
+    )
+
+
+@app.post("/tools/set_max_rps")
+def http_set_max_rps():
+    body = request.get_json(silent=True) or {}
+    value = body.get("value")
+    if value is None:
+        return jsonify({"ok": False, "error": "missing value"}), 400
+    try:
+        res = defender.tool_set_max_rps(int(value))
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    defender.tool_actions.append({"ts": int(time.time()), "results": [{"tool": "set_max_rps", **res}]})
+    return jsonify(res)
+
+
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True)
+    port = int(os.getenv("PORT", "5000"))
+    app.run(debug=True, port=port)

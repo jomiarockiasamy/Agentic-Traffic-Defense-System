@@ -1,2 +1,3 @@
 flask
 werkzeug
+anthropic>=0.40.0
